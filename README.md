@@ -1,5 +1,7 @@
 # Controlador de velocidad para motor DC
 
+![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/prototype.jpg)
+
 ## Introducción
 En el presente repositorio se centra el material para crear un prototipo de controlador de velocidad para motores DC implementando Arduino. Con el se pretende hacer experimentación de algoritmos de control automático y procesamiento de señales, específicamente en filtros.
 
