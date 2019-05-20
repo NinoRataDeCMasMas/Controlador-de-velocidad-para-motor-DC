@@ -1,0 +1,4 @@
+Encoder	KEYWORD1
+pulseXsec	KEYWORD2
+read	KEYWORD2
+

@@ -1,0 +1,137 @@
+#include <Printer.h>
+#include <Encoder.h>
+#include <Controller.h>
+#include <LiquidCrystal_I2C.h>
+#include <ComplementaryFilter.h>
+/**
+ * @brief MotorSystem class
+ */
+class MotorSystem
+{
+  const int offset = 50;
+  
+  byte motorPin, potPin, encoderPin1, encoderPin2;
+  Encoder* encoder;            // instance of encoder class
+  LiquidCrystal_I2C* lcd;      // instance of lcd class
+  ComplementaryFilter* filter; // instance of filter  class
+  
+  double setpoint, input, output;
+  Controller* controller;
+
+public:
+  MotorSystem(byte motorPin, byte potPin, byte encoderPin1, byte encoderPin2);
+
+  byte interruptPin() const;
+  void generateCuerve();
+  void begin();
+  void run();
+};
+/**
+ * @brief Parametrized ctor.
+ * 
+ * @param motorPin:    pin of motor 
+ * @param potPin:      pin of potentiometer
+ * @param encoderPin1: pin of first encoder/ interruption pin
+ * @param encoderPin2: pin of second encoder
+ */
+MotorSystem::MotorSystem(byte motorPin, byte potPin, byte encoderPin1, byte encoderPin2):
+motorPin(motorPin), potPin(potPin), encoderPin1(encoderPin1), encoderPin2(encoderPin2)
+{
+  setpoint = input = output = 0.0;
+    
+  encoder = new Encoder(encoderPin1, encoderPin2);
+  filter  = new ComplementaryFilter(0.75); // we start the complementary filter
+  lcd     = new LiquidCrystal_I2C(0x27, 16, 2);  
+
+  controller = new Controller(&setpoint, &input, &output, 1);
+
+  lcd->begin();
+  pinMode(potPin, INPUT); // enable potentiometer pin
+}
+/**
+ * @brief Method for read encoders interruption
+ */
+void MotorSystem::begin( void )
+{
+  encoder->read();
+}
+/**
+ * @brief  give to compiler the defined interruption pin
+ * @return encoderPin1
+ */
+byte MotorSystem::interruptPin() const
+{
+  return encoderPin1;  
+}
+/**  
+ *   @breaf run the system
+ */
+void MotorSystem::run( void )
+{
+  // we read pwm value from potentiometer. the value contains
+  // an offset that serve as on/off switch.
+  auto pot = map(analogRead(potPin), 0, 1023, 0, 255 + offset);
+
+  if(pot < offset)
+  {
+    // A "pot" value less than offset indicates system in off mode
+    analogWrite(motorPin, 0);
+
+    // show data
+    lcd->setCursor(0, 0);
+    lcd->print(" motor  apagado ");
+    lcd->setCursor(0, 1);
+    lcd->print("                ");     
+  }
+  else
+  {
+    // A "pot" value greater than offset indicates system in on mode.
+    // filtering pot value without offset    
+    auto pwm = filter->compute(pot - (offset + .0));  
+
+    setpoint = 7.51300*pwm - 164.67621;
+    input    = encoder->pulseXsec();
+    controller->compute();
+    output = 0.131959*output + 22.318997;
+    
+    Serial << input << "," << output << endl;
+  
+    analogWrite(motorPin, output);
+
+    // show data
+    lcd->setCursor(0, 0);
+    lcd->print("motor  encendido");  
+    lcd->setCursor(0, 1);
+    lcd->print("U:" + (String)pwm);
+    lcd->setCursor(9, 1);
+    lcd->print("Y:" + (String)encoder->pulseXsec());    
+  }
+}
+/**
+ * @brief expriment to determinate the linear region of system
+ */
+#define LINEAR  1
+ 
+void MotorSystem::generateCuerve( void )
+{
+  auto range = 100;
+  for(int pwm = 0; pwm <= range; ++pwm)
+  {
+    analogWrite(motorPin, pwm);
+    
+    #if LINEAR == 1
+      // probe the linear equation obtained by plant analysis
+      Serial << 7.51300*pwm - 164.67621 << "," << encoder->pulseXsec() << endl;
+    #else
+      Serial << pwm << "," << encoder->pulseXsec() << endl;
+    #endif
+        
+    delay(50);
+  }
+
+  delay(50);
+  analogWrite(motorPin, 0);
+  while(true);
+
+}
+/* EOF */

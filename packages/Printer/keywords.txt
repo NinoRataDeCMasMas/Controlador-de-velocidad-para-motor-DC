@@ -1,0 +1,4 @@
+Printer	KEYWORD1
+endl	KEYWORD1
+tab	KEYWORD1
+
