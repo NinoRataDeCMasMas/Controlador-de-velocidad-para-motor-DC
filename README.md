@@ -27,8 +27,8 @@ En esta parte del proyecto de anadio una pantalla LCD con conexion i2c para la v
 
 ## Instalación del proyecto
 Descarga los contenidos de este repositorio en tu computadora. Mueva los directorios
-	* _ComplementaryFilter_
-	* _Encoder_
+ * _ComplementaryFilter_
+ * _Encoder_
 
 al directorio de librerias de Arduino. El directorio llamado _sketch_ contiene el programa principal y la clase _MotorSYstem_. MOdifique dicha clase a sus necesidades y cargue en el arduino el archivo _sketch.ino_. 
 
