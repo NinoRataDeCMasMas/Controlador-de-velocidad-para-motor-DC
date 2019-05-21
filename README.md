@@ -106,4 +106,32 @@ Para implementar un sistema de lazo cerrado como el que se muestra en el siguien
 
 Para ello se dispone a utilizar un metodo llamado _generateCuerve_ el cual proporcionara al sistema todo el rango dinamico del PWM al motor y leera la respuesta en _cuentas por unidad de tiempo_ descrita en la clase _Encoder_. Utilizando el siguiente script en lenguaje R se pudo graficar y determinar la region lineal del sistema para asi acotar su entrada:
 
+```R
+# Take all data set measured by motor response
+raw  <- read.csv("motorModel.csv")
+plot(raw$RPM, raw$PULSES, col = "red", ylab = "encoder pulses", xlab = "pwm signal")
+
+# select data in range 0...100, previous analysis
+data = read.csv("motorLinearModel.csv")
+# generate a linear equations 
+model     <- lm(data$PULSES ~ data$RPM)
+antiModel <- lm(data$RPM ~ data$PULSES)
+
+# show results
+plot(data$RPM, data$PULSES, col = "green", ylab = "encoder pulses", xlab = "pwm signal")
+abline(model)
+
+# data analysis
+summary(model)
+summary(antiModel)
+anova(model)
+```
+
+![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/motorResponse.png)
+
+![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/linearRegion.png)
+
+
+Del analisis obtenido generamos ecuaciones lineales para la conversion entre PWM y pulsos por tiempo. 
+
 
