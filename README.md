@@ -99,7 +99,7 @@ void MotorSystem::run( void )
 }
 ```
 
-## Implementando un lazo abierto
+## Implementando un lazo cerrado
 Para implementar un sistema de lazo cerrado como el que se muestra en el siguiente esquema se propone conocer el comportamiento de la planta o sistema, en este caso el motor DC. 
 
 ![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/systemRetro.png)
@@ -127,11 +127,20 @@ summary(antiModel)
 anova(model)
 ```
 
-![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/motorResponse.png)
+<p align="center">
+  <img src="https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/motorResponse.png">
+</p>
 
-![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/linearRegion.png)
+<p align="center">
+  <img src="https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/linearRegion.png">
+</p>
 
+Del analisis obtenido generamos ecuaciones lineales para la conversion entre PWM y pulsos por tiempo.
 
-Del analisis obtenido generamos ecuaciones lineales para la conversion entre PWM y pulsos por tiempo. 
+### Implementando la clase _Controller_
+
+A la par del proyecto, se desarrollo una serie de clases que implementan en conjunto un [controlador PID](https://es.wikipedia.org/wiki/Controlador_PID), esto con el fin de aprovechar la retroalimentacion del sistema. A continuacion se muestra el diagrama correspondiente:
+
+![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/PIDClass.png)
 
 
