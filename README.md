@@ -97,4 +97,13 @@ void MotorSystem::run( void )
 		lcd->print("Y:" + (String)encoder->pulseXsec());    
 	}
 }
+```
+
+## Implementando un lazo abierto
+Para implementar un sistema de lazo cerrado como el que se muestra en el siguiente esquema se propone conocer el comportamiento de la planta o sistema, en este caso el motor DC. 
+
+![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/systemRetro.png)
+
+Para ello se dispone a utilizar un metodo llamado _generateCuerve_ el cual proporcionara al sistema todo el rango dinamico del PWM al motor y leera la respuesta en _cuentas por unidad de tiempo_ descrita en la clase _Encoder_. Utilizando el siguiente script en lenguaje R se pudo graficar y determinar la region lineal del sistema para asi acotar su entrada:
+
 
