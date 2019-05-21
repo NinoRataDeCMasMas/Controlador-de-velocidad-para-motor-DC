@@ -23,3 +23,78 @@ Una vez construida la implementación de Hardware se desarrollo una serie de pro
 
 ![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/motorSystemClass.png)
 
+En esta parte del proyecto de anadio una pantalla LCD con conexion i2c para la visualizacion de los parametros, ya que el monitor serial del Arduino se ocuparia para otros propositos.
+
+## Instalación del proyecto
+Descarga los contenidos de este repositorio en tu computadora. Mueva los directorios
+	* _ComplementaryFilter_
+	* _Encoder_
+
+al directorio de librerias de Arduino. El directorio llamado _sketch_ contiene el programa principal y la clase _MotorSYstem_. MOdifique dicha clase a sus necesidades y cargue en el arduino el archivo _sketch.ino_. 
+
+## Implementando un lazo abierto
+
+![](https://github.com/NinoRataDeCMasMas/Controlador-de-velocidad-para-motor-DC/blob/master/schematics/system.png)
+
+El siguiente ejemplo implementa un control a lazo abierto del sistema, mostrado en el esquema anterior:
+
+```C++
+
+#include "MotorSystem.h"
+
+const long baudage = 115200;
+
+MotorSystem* motorSystem;
+
+void setup( void )
+{
+  Serial.begin(baudage);
+  motorSystem = new MotorSystem(9, A1, 3, 4);
+
+  auto isr = []( void ) -> void { motorSystem->begin(); };
+  attachInterrupt(digitalPinToInterrupt(motorSystem->interruptPin()), isr, CHANGE);
+}
+
+void loop( void )
+{
+  motorSystem->run();
+}
+```
+Donde el metodo _run()_ ejecuta el siguiente codigo:
+
+```C++
+
+void MotorSystem::run( void )
+{
+	// we read pwm value from potentiometer. the value contains
+	// an offset that serve as on/off switch.
+	auto pot = map(analogRead(potPin), 0, 1023, 0, 255 + offset);
+
+	if(pot < offset)
+	{
+		// A "pot" value less than offset indicates system in off mode
+		analogWrite(motorPin, 0);
+
+		// show data
+		lcd->setCursor(0, 0);
+		lcd->print(" motor  apagado ");
+		lcd->setCursor(0, 1);
+		lcd->print("                ");     
+	}
+	else
+	{
+		// A "pot" value greater than offset indicates system in on mode.
+		// filtering pot value without offset    
+		auto pwm = filter->compute(pot - (offset + .0));  
+		analogWrite(motorPin, pwm);
+
+		// show data
+		lcd->setCursor(0, 0);
+		lcd->print("motor  encendido");  
+		lcd->setCursor(0, 1);
+		lcd->print("U:" + (String)pwm);
+		lcd->setCursor(9, 1);
+		lcd->print("Y:" + (String)encoder->pulseXsec());    
+	}
+}
+
