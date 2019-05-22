@@ -11,6 +11,8 @@ class PDController : public Controller {
   
 public:
   PDController(double* setpoint, double* input, double* output, double Kp, double Kd);
+  PDController(double Kp, double Kd);
+
   void compute(void);  
 };
 
@@ -19,6 +21,13 @@ PDController::PDController(double* setpoint, double* input, double* output, doub
   this->lastTime = 0;
   this->Kd = Kd;  
 }
+
+PDController::PDController(double Kp, double Kd): Controller(Kp)
+{
+  this->lastTime = 0;
+  this->Kd = Kd;  
+}
+
 
 void PDController::compute(void)
 {

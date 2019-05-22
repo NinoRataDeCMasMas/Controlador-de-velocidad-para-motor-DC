@@ -11,10 +11,18 @@ class PIDController : public Controller {
   
 public:
   PIDController(double* setpoint, double* input, double* output, double Kp, double Kd, double Ki);
+  PIDController(double Kp, double Kd, double Ki);
   void compute(void);
 };
 
 PIDController::PIDController(double* setpoint, double* input, double* output, double Kp, double Kd, double Ki): Controller(setpoint, input, output, Kp)
+{
+  this->lastTime = 0;  
+  this->Ki = Ki;
+  this->Kd = Kd;
+}
+
+PIDController::PIDController(double Kp, double Kd, double Ki): Controller(Kp)
 {
   this->lastTime = 0;  
   this->Ki = Ki;

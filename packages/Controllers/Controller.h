@@ -16,6 +16,9 @@ protected:
   
 public:
   Controller(double* setpoint, double* input, double* output, double Kp);
+  Controller(double Kp);
+
+  void attach(double* setpoint, double* input, double* output);
   virtual void compute(void);
 };
 
@@ -25,6 +28,18 @@ Controller::Controller(double* setpoint, double* input, double* output, double K
   this->setpoint = setpoint;
   this->output   = output;
   this->Kp = Kp;        
+}
+
+Controller::Controller(double Kp)
+{
+  this->Kp = Kp;        
+}
+
+void Controller::attach(double* setpoint, double* input, double* output)
+{
+  this->input    = input;
+  this->setpoint = setpoint;
+  this->output   = output;
 }
 
 void Controller::compute(void)

@@ -11,10 +11,17 @@ class PIController : public Controller {
   
 public:
   PIController(double* setpoint, double* input, double* output, double Kp, double Ki);
+  PIController(double Kp, double Ki);
   void compute(void); 
 };
 
 PIController::PIController(double* setpoint, double* input, double* output, double Kp, double Ki): Controller(setpoint, input, output, Kp)
+{
+  this->lastTime = 0;  
+  this->Ki = Ki;  
+}
+
+PIController::PIController(double Kp, double Ki): Controller(Kp)
 {
   this->lastTime = 0;  
   this->Ki = Ki;  
