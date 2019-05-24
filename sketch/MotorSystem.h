@@ -16,27 +16,29 @@
  */
 class MotorSystem
 {
-  double setpoint, input, output; // variables to PID controller
-	const int offset = 50;          // offset to use potentiometer as on/off switch
-	byte motorPin, potPin;
-	byte encoderPin1, encoderPin2;
+  const int offset = 50;          // offset to use potentiometer as on/off switch
+  byte motorPin, potPin;          // pines for potentiomerer and motor control
+  byte encoderPin1, encoderPin2;  // pines to read response by encoder 
+  double setpoint, input, output; // variables for controller
   
-	Encoder* encoder;              // instance of encoder class; read by interruption pin
-	LiquidCrystal_I2C* lcd;        // instance of lcd class: show input and output variables
-	ComplementaryFilter* filter;   // instance of filter class: filtering potentiometer signal
-	Controller* controller;        // instance of controller class: PID controller implementation
-
-  void debugger();               // method to observe the inner system variables
-  void runWithFeedback();        // control system with feedback
-  void runWithoutFeedback();     // control system without feedback  
+  Encoder* encoder;               // instance of encoder class; read by interruption pin
+  LiquidCrystal_I2C* lcd;         // instance of lcd class: show input and output variables
+  ComplementaryFilter* filter;    // instance of filter class: filtering potentiometer signal
+  Controller* controller;         // instance of controller class: PID controller implementation
+  
+  void debugger() const;          // method to observe the inner system variables
+  void plot() const;              // method to plot setpoint vs output  
+  void runWithFeedback();         // control system with feedback
+  void runWithoutFeedback();      // control system without feedback  
   
 public:
   MotorSystem(byte motorPin, byte potPin, byte encoderPin1, byte encoderPin2); // ctor1
 	MotorSystem(byte motorPin, byte potPin, byte encoderPin1, byte encoderPin2, Controller* control); // ctor2
-	byte interruptPin() const; // provides the encoder pin to configure arduino's interruption
-	void generateCuerve();     // routine to generate a system's curve to analysis
-	void begin();              // provides the encoder method to use in arduino's isr
-	void run();                // run the control system
+  
+	byte interruptPin() const;      // provides the encoder pin to configure arduino's interruption
+	void generateCuerve() const;    // routine to generate a system's curve to analysis
+	void begin();                   // provides the encoder method to use in arduino's isr
+	void run();                     // run the control system
 };
 /**
  * @brief Parametrized ctor.
@@ -50,17 +52,16 @@ MotorSystem::MotorSystem(byte motorPin, byte potPin, byte encoderPin1, byte enco
 motorPin(motorPin), potPin(potPin), encoderPin1(encoderPin1), encoderPin2(encoderPin2)
 {
   setpoint   = input = output = 0.0; // init the controller variables
-  controller = NULL;
+  controller = NULL; // the controller is not required in this funcionality
    
   // init the system components  
   encoder    = new Encoder(encoderPin1, encoderPin2);
   lcd        = new LiquidCrystal_I2C(0x27, 16, 2);
-  filter     = new ComplementaryFilter(0.75);    
+  filter     = new ComplementaryFilter(0.75);
   
   // configure some system components
-  lcd->begin();
+  lcd->begin();           // enable lcd screen
   pinMode(potPin, INPUT); // enable potentiometer pin
- controller->attach(&setpoint, &input, &output);
 }
 /**
  * @brief Parametrized ctor.
@@ -75,7 +76,7 @@ MotorSystem::MotorSystem(byte motorPin, byte potPin, byte encoderPin1, byte enco
 motorPin(motorPin), potPin(potPin), encoderPin1(encoderPin1), encoderPin2(encoderPin2)
 {
 	setpoint   = input = output = 0.0; // init the controller variables
-  controller = control;
+  controller = control; // the controller is required for feedback
    
   // init the system components  
 	encoder    = new Encoder(encoderPin1, encoderPin2);
@@ -83,16 +84,23 @@ motorPin(motorPin), potPin(potPin), encoderPin1(encoderPin1), encoderPin2(encode
   filter     = new ComplementaryFilter(0.75);    
 	
 	// configure some system components
-	lcd->begin();
-	pinMode(potPin, INPUT); // enable potentiometer pin
- controller->attach(&setpoint, &input, &output);
+  lcd->begin();           // enable lcd screen
+  pinMode(potPin, INPUT); // enable potentiometer pin
+  controller->attach(&setpoint, &input, &output); // nessesary params for Controller class
 }
 /**
  * @brief method to observe the inner system variables
  */
-void MotorSystem::debugger()
+void MotorSystem::debugger() const
 {
   Serial << setpoint << ", " << input << ", " << setpoint - input << ", " << output << endl; 
+}
+/**
+ * @brief method to plot setpoint vs output
+ */
+void MotorSystem::plot() const
+{
+  Serial << setpoint << "," << output << "," << input << endl;
 }
 /**
  * @brief provides the encoder method to use in arduino's isr
@@ -116,8 +124,8 @@ void MotorSystem::runWithFeedback()
 {
   // we read revolution value from potentiometer. the value contains
   // an offset that serve as on/off switch.
-  auto pot = map(analogRead(potPin), 0, 1023, 0, 587 + offset);
-
+  auto pot = map(analogRead(potPin), 0, 1023, 0, 587 + offset); // 0 to 587 is the linear region of motor  system 
+                                                                // revolutions, measured in pulses per delta-time
   if(pot < offset)
   {
     // A "pot" value less than offset indicates system in off mode
@@ -136,9 +144,9 @@ void MotorSystem::runWithFeedback()
     output   = 0.131959*output + 22.318997;           // convert pulses per-delta to pwm  
     analogWrite(motorPin, output);                    // inject the response into the system
     
-    debugger();                                       // observe the inner system variables
     output = 7.51300*output - 164.67621;              // convert pwm to pulses per-delta 
-
+    plot();                                           // observe the inner system variables
+    
     // show data in lcd screen
     lcd->setCursor(0, 0); lcd->print("setpoint: " + (String)setpoint + "  ");  
     lcd->setCursor(0, 1); lcd->print("output:   " + (String)output   + "  ");
@@ -151,7 +159,7 @@ void MotorSystem::runWithoutFeedback()
 {
   // we read pwm value from potentiometer. the value contains
   // an offset that serve as on/off switch.
-  auto pot = map(analogRead(potPin), 0, 1023, 0, 255 + offset);
+  auto pot = map(analogRead(potPin), 0, 1023, 0, 255 + offset); // 0 to 255 is the pwm range
 
   if(pot < offset)
   {
@@ -177,13 +185,13 @@ void MotorSystem::runWithoutFeedback()
  */
 void MotorSystem::run( void )
 {
-  if(controller == NULL) runWithoutFeedback();
-  else runWithFeedback();
+  if(controller == NULL) runWithoutFeedback(); // if the object are built with ctor1
+  else runWithFeedback();                      // if the object are built with ctor2
 }
 /**
  * @brief routine to generate a system's curve to analysis
  */
-void MotorSystem::generateCuerve( void )
+void MotorSystem::generateCuerve( void ) const
 {
 	auto range = 255;
   // read the response of the system to the imposed range
